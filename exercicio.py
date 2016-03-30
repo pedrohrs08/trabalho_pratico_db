@@ -13,32 +13,40 @@ def file_contents(file_name):
         f.close()
         
 source = dict((file_name, file_contents(file_name))for file_name in text_files)
-print source
-def mapfn(k, v):
-    print 'map' + k
+
+
+def map_function(k, v):
     from stopwords import allStopWords
     for line in v.splitlines():
         authors_list = line.split(":::")[1]
         terms = line.split(":::")[2]
 	for author in authors_list.split("::"):
 	        for word in terms.split():
+                        word = word.lower()
 			if(word not in allStopWords):
-				yield author + "::" + word,1
+				yield author,{word: 1}
             
 
-def reducefn(k, v):
-    print 'reduce ' + k
-    return sum(v)
+def reduce_function(k, v):
+    print "value: " + k
+    dictionary = {}
+    for index, item in enumerate(v):
+	for key,value in item.iteritems():
+        	value_old = dictionary.get(key,0)
+		dictionary[key] = value_old + value 
+	
+    return dictionary
 
 
 s = mincemeat.Server()
 
 # The data source can be any dictionary-like object
 s.datasource = source
-s.mapfn = mapfn
-s.reducefn = reducefn
+s.mapfn = map_function
+s.reducefn = reduce_function
 
 results = s.run_server(password="changeme")
+
 print results
 
 w = csv.writer(open("results.csv", "w"))
